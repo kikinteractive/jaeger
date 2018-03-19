@@ -11,6 +11,8 @@
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
+//
+// Modifications by Kik Interactive Inc.
 
 package app
 
@@ -45,6 +47,7 @@ const (
 var (
 	errCannotQueryTagAndDuration = fmt.Errorf("Cannot query for tags when '%s' is specified", minDurationParam)
 	errMaxDurationGreaterThanMin = fmt.Errorf("'%s' should be greater than '%s'", maxDurationParam, minDurationParam)
+	errMustSpecifyAFilter        = fmt.Errorf("Must specify at least one filter (operation, duration or tags)")
 
 	// ErrServiceParameterRequired occurs when no service name is defined
 	ErrServiceParameterRequired = fmt.Errorf("Parameter '%s' is required", serviceParam)
@@ -183,6 +186,10 @@ func (p *queryParser) validateQuery(traceQuery *traceQueryParameters) error {
 		if traceQuery.DurationMax < traceQuery.DurationMin {
 			return errMaxDurationGreaterThanMin
 		}
+	}
+	// Explicitly require some kind of filtering to reduce impact on Cassandra
+	if len(traceQuery.traceIDs) == 0 && traceQuery.DurationMax == 0 && traceQuery.OperationName == "" && len(traceQuery.Tags) == 0 {
+		return errMustSpecifyAFilter
 	}
 	return nil
 }
